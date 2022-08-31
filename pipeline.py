@@ -66,10 +66,10 @@ if not WGET_AT:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20220931.02'
-TRACKER_ID = 'grab'
+VERSION = '20220931.03'
+TRACKER_ID = 'grabtemp20220831'
 TRACKER_HOST = 'legacy-api.arpa.li'
-MULTI_ITEM_SIZE = 40
+MULTI_ITEM_SIZE = 10
 
 ###########################################################################
 # This section defines project-specific tasks.
@@ -221,7 +221,7 @@ class ZstdDict(object):
         response = requests.get(
             'https://legacy-api.arpa.li/dictionary',
             params={
-                'project': TRACKER_ID
+                'project': 'grab'
             }
         )
         response.raise_for_status()
@@ -284,7 +284,7 @@ class WgetArgs(object):
         with open(os.path.join(item['item_dir'], 'zstdict'), 'wb') as f:
             f.write(dict_data['dict'])
         item['dict_id'] = dict_data['id']
-        item['dict_project'] = TRACKER_ID
+        item['dict_project'] = 'grab'
         wget_args.extend([
             '--warc-zstd-dict', ItemInterpolation('%(item_dir)s/zstdict'),
         ])
