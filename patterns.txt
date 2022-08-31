@@ -195,3 +195,4 @@
 ^https?://[^/]*090%.info
 ^https?://[^/]*side%-b%.jp
 ^https?://[^/]*mist%.in
+^https?://[^/]*users%.telenet%.be
