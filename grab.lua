@@ -135,7 +135,16 @@ percent_encode_url = function(url)
   return temp
 end
 
-queue_url = function(urls_queue, url)
+allowed_by_pattern = function(url)
+  for pattern, _ in pairs(allowed_patterns) do
+    if string.match(url, pattern) then
+      return true
+    end
+  end
+  return false
+end
+
+queue_url = function(urls_queue, url, parenturl)
   if not url then
     return nil
   end
@@ -147,6 +156,9 @@ queue_url = function(urls_queue, url)
   url = string.match(url, "^([^{]+)")
   url = string.match(url, "^([^<]+)")
   url = string.match(url, "^([^\\]+)")
+  if parenturl and not allowed_by_pattern(parenturl) then
+    urls_queue = queued_outlinks
+  end
   if not queued_urls[url] and not urls_queue[url] then
     if find_path_loop(url, 2) then
       return false
@@ -171,24 +183,24 @@ queue_new_urls = function(url)
   local newurl = string.gsub(url, "([%?&;])[aA][mM][pP];", "%1")
   if url == current_url then
     if newurl ~= url then
-      queue_url(queued_urls, newurl)
+      queue_url(queued_urls, newurl, url)
     end
   end
   for _, param_pattern in pairs(bad_params) do
     newurl = remove_param(newurl, param_pattern)
   end
   if newurl ~= url then
-    queue_url(queued_urls, newurl)
+    queue_url(queued_urls, newurl, url)
   end
   newurl = string.match(newurl, "^([^%?&]+)")
   if newurl ~= url then
-    queue_url(queued_urls, newurl)
+    queue_url(queued_urls, newurl, url)
   end
   url = string.gsub(url, "&quot;", '"')
   url = string.gsub(url, "&amp;", "&")
   for newurl in string.gmatch(url, '([^"]+)') do
     if newurl ~= url then
-      queue_url(queued_urls, newurl)
+      queue_url(queued_urls, newurl, url)
     end
   end
 end
@@ -253,12 +265,12 @@ wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_pars
   end]]
 
   if urlpos["link_refresh_p"] ~= 0 then
-    queue_url(queued_urls, url)
+    queue_url(queued_urls, url, parenturl)
     return false
   end
 
   if urlpos["link_inline_p"] ~= 0 then
-    queue_url(queued_urls, url)
+    queue_url(queued_urls, url, parenturl)
     return false
   end
 
@@ -268,7 +280,7 @@ wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_pars
 
   for pattern, _ in pairs(allowed_patterns) do
     if string.match(url, pattern) then
-      queue_url(queued_urls, url)
+      queue_url(queued_urls, url, parenturl)
     end
   end
 end
@@ -283,7 +295,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
   local function check(url, headers)
     local url = string.match(url, "^([^#]+)")
     url = string.gsub(url, "&amp;", "&")
-    queue_url(queued_urls, url)
+    queue_url(queued_urls, url, nil)
   end
 
   local function checknewurl(newurl, headers)
@@ -341,35 +353,6 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
 
   if not url then
     html = read_file(file)
-    if not url then
-      html = string.gsub(html, "&#160;", " ")
-      html = string.gsub(html, "&lt;", "<")
-      html = string.gsub(html, "&gt;", ">")
-      html = string.gsub(html, "&quot;", '"')
-      html = string.gsub(html, "&apos;", "'")
-      html = string.gsub(html, "&#(%d+);",
-        function(n)
-          return string.char(n)
-        end
-      )
-      html = string.gsub(html, "&#x(%d+);",
-        function(n)
-          return string.char(tonumber(n, 16))
-        end
-      )
-      local temp_html = string.gsub(html, "\n", "")
-      for _, remove in pairs({"", "<br/>", "</?p[^>]*>"}) do
-        if remove ~= "" then
-          temp_html = string.gsub(temp_html, remove, "")
-        end
-        for newurl in string.gmatch(temp_html, "(https?://[^%s<>#\"'\\`{})%]]+)") do
-          while string.match(newurl, "[%.&,!;]$") do
-            newurl = string.match(newurl, "^(.+).$")
-          end
-          check(newurl)
-        end
-      end
-    end
     for newurl in string.gmatch(html, "[^%-][hH][rR][eE][fF]='([^']+)'") do
       checknewshorturl(newurl)
     end
@@ -390,27 +373,6 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     --[[for newurl in string.gmatch(html, "%(([^%)]+)%)") do
       checknewurl(newurl)
     end]]
-  elseif string.match(url, "^https?://[^/]+/.*[^a-z0-9A-Z][pP][dD][fF]$")
-    or string.match(url, "^https?://[^/]+/.*[^a-z0-9A-Z][pP][dD][fF][^a-z0-9A-Z]")
-    or string.match(read_file(file, 4), "%%[pP][dD][fF]") then
-    io.stdout:write("Extracting links from PDF.\n")
-    io.stdout:flush()
-    local temp_file = file .. "-html.html"
-    local check_file = io.open(temp_file)
-    if check_file then
-      check_file:close()
-      os.remove(temp_file)
-    end
-    os.execute("pdftohtml -nodrm -hidden -i -s -q " .. file)
-    check_file = io.open(temp_file)
-    if check_file then
-      check_file:close()
-      wget.callbacks.get_urls(temp_file, nil, nil, nil)
-      os.remove(temp_file)
-    else
-      io.stdout:write("Not a PDF.\n")
-      io.stdout:flush()
-    end
   end
 end
 
@@ -536,7 +498,8 @@ wget.callbacks.finish = function(start_time, end_time, wall_time, numurls, total
   end
 
   for key, items_data in pairs({
-    ["grabtemp20220831-mxa84c2gbv0u46g"]=queued_urls
+    ["grabtemp20220831-mxa84c2gbv0u46g"]=queued_urls,
+    ["urls-y1o7lotz02iy0sw"]=queued_outlinks
   }) do
     local name = string.match(key, "^(.+)%-[^%-]+$")
     io.stdout:write("Queuing URLs for " .. name .. ".\n")
