@@ -283,6 +283,8 @@ wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_pars
       queue_url(queued_urls, url, parenturl)
     end
   end
+
+  queue_url(queued_outlinks, url, nil)
 end
 
 wget.callbacks.get_urls = function(file, url, is_css, iri)
