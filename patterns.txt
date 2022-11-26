@@ -1,1 +1,3 @@
-^https?://[^/]*users%.telenet%.be
+^https?://[^/]*webry%.info
+^https?://[^/]*webry%.biglobe%.ne%.jp
+^https?://[^/]*webryblog%.biglobe%.ne%.jp

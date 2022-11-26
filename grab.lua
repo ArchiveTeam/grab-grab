@@ -472,7 +472,7 @@ end
 wget.callbacks.finish = function(start_time, end_time, wall_time, numurls, total_downloaded_bytes, total_download_time)
   local function submit_backfeed(newurls, key)
     local tries = 0
-    local maxtries = 4
+    local maxtries = 10
     while tries < maxtries do
       if killgrab then
         return false
@@ -498,7 +498,7 @@ wget.callbacks.finish = function(start_time, end_time, wall_time, numurls, total
   end
 
   for key, items_data in pairs({
-    ["grabtemp20220831-mxa84c2gbv0u46g"]=queued_urls,
+    ["grabtemp20221126-zdsihqp9orz79by"]=queued_urls,
     ["urls-y1o7lotz02iy0sw"]=queued_outlinks
   }) do
     local name = string.match(key, "^(.+)%-[^%-]+$")
