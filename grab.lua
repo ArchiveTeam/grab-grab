@@ -160,9 +160,9 @@ queue_url = function(urls_queue, url, parenturl)
     urls_queue = queued_outlinks
   end
   if not queued_urls[url] and not urls_queue[url] then
-    if find_path_loop(url, 2) then
+    --[[if find_path_loop(url, 2) then
       return false
-    end
+    end]]
     urls_queue[url] = true
   end
 end
@@ -222,9 +222,9 @@ wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_pars
     return true
   end
 
-  if find_path_loop(url, 2) then
+  --[[if find_path_loop(url, 5) then
     return false
-  end
+  end]]
 
   local _, count = string.gsub(url, "[/%?]", "")
   if count >= 16 then
