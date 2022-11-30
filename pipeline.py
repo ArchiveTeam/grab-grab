@@ -66,7 +66,7 @@ if not WGET_AT:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20221128.01'
+VERSION = '20221130.01'
 TRACKER_ID = 'grabtemp20221126'
 TRACKER_HOST = 'legacy-api.arpa.li'
 MULTI_ITEM_SIZE = 40
@@ -249,6 +249,8 @@ class WgetArgs(object):
     def realize(self, item):
         with open('user-agents.txt', 'r') as f:
             USER_AGENT = random.choice(list(f)).strip()
+        USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36'
+        print(USER_AGENT)
         wget_args = [
             'timeout', '1000',
             WGET_AT,
