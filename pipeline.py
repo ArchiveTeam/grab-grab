@@ -66,7 +66,7 @@ if not WGET_AT:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20221130.01'
+VERSION = '20221209.01'
 TRACKER_ID = 'grabtemp20221126'
 TRACKER_HOST = 'legacy-api.arpa.li'
 MULTI_ITEM_SIZE = 40

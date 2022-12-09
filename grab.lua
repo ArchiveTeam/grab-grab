@@ -410,6 +410,14 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
   url_count = url_count + 1
   io.stdout:write(url_count .. "=" .. status_code .. " " .. url["url"] .. "  \n")
   io.stdout:flush()
+  
+  -- webryblog specific
+  if status_code == 423
+    and string.match(url["url"], "^https?://[^/]*%.at%.webry%.info/") then
+    io.stdout:write("Skipping this URL.\n")
+    io.stdout:flush()
+    return wget.actions.EXIT
+  end
 
   if killgrab then
     return wget.actions.ABORT
