@@ -274,9 +274,9 @@ wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_pars
     return false
   end]]
 
-  if string.match(url, "^https?://[^/]+$") then
+  --[[if string.match(url, "^https?://[^/]+$") then
     url = url .. "/"
-  end
+  end]]
 
   for pattern, _ in pairs(allowed_patterns) do
     if string.match(url, pattern) then
@@ -417,6 +417,20 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
     io.stdout:write("Skipping this URL.\n")
     io.stdout:flush()
     return wget.actions.EXIT
+  end
+
+  -- xs4all specific
+  if url and string.match(url["url"], "xs4all") then
+    local a, b = string.match(url["url"], "^https?://[^/]*xs4all%.nl/~([^/]+)(/?.*)$")
+    if a and b then
+      local newurl = urlparse.absolute(url["url"], "//" .. a .. ".home.xs4all.nl" .. b)
+      queue_url(queued_urls, newurl, url["url"])
+    end
+    a, b = string.match(url["url"], "^https?://([^/]+)%.home%.xs4all%.nl(/?.*)$")
+    if a and b then
+      local newurl = urlparse.absolute(url["url"], "//www.xs4all.nl/~" .. a .. b)
+      queue_url(queued_urls, newurl, url["url"])
+    end
   end
 
   if killgrab then

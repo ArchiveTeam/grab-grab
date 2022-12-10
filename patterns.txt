@@ -1,3 +1,5 @@
 ^https?://[^/]*webry%.info
 ^https?://[^/]*webry%.biglobe%.ne%.jp
 ^https?://[^/]*webryblog%.biglobe%.ne%.jp
+^https?://[^/]*xs4all%.nl/~
+^https?://[^/]+%.home%.xs4all%.nl
