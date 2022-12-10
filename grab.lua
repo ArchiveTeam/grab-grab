@@ -264,7 +264,7 @@ wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_pars
     return false
   end]]
 
-  if urlpos["link_refresh_p"] ~= 0 then
+  --[[if urlpos["link_refresh_p"] ~= 0 then
     queue_url(queued_urls, url, parenturl)
     return false
   end
@@ -272,7 +272,7 @@ wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_pars
   if urlpos["link_inline_p"] ~= 0 then
     queue_url(queued_urls, url, parenturl)
     return false
-  end
+  end]]
 
   if string.match(url, "^https?://[^/]+$") then
     url = url .. "/"
