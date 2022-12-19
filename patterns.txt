@@ -3,3 +3,4 @@
 ^https?://[^/]*webryblog%.biglobe%.ne%.jp
 ^https?://[^/]*xs4all%.nl/~
 ^https?://[^/]+%.home%.xs4all%.nl
+^https?://geolog%.mydns%.jp
