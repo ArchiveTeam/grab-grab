@@ -157,15 +157,23 @@ queue_url = function(urls_queue, url, parenturl)
   url = string.match(url, "^([^{]+)")
   url = string.match(url, "^([^<]+)")
   url = string.match(url, "^([^\\]+)")
-  if parenturl and not allowed_by_pattern(parenturl) then
+  if not allowed_by_pattern(url) then
     urls_queue = queued_outlinks
   end
-  if not queued_urls[url] and not urls_queue[url] then
+  local shard = ""
+  if string.match(url, "^https?://[^/]*tweakblogs%.net") then
+    shard = "tweakblogs"
+  end
+  if not urls_queue[shard] then
+    urls_queue[shard] = {}
+  end
+  urls_queue[shard][url] = true
+  --if not queued_urls[shard][url] and not urls_queue[shard][url] then
     --[[if find_path_loop(url, 2) then
       return false
     end]]
-    urls_queue[url] = true
-  end
+  --  urls_queue[shard][url] = true
+  --end
 end
 
 remove_param = function(url, param_pattern)
@@ -285,7 +293,9 @@ wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_pars
     end
   end
 
-  queue_url(queued_outlinks, url, nil)
+  if not allowed_by_pattern(url) then
+    queue_url(queued_outlinks, url, nil)
+  end
 end
 
 wget.callbacks.get_urls = function(file, url, is_css, iri)
@@ -503,15 +513,19 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
 end
 
 wget.callbacks.finish = function(start_time, end_time, wall_time, numurls, total_downloaded_bytes, total_download_time)
-  local function submit_backfeed(newurls, key)
+  local function submit_backfeed(newurls, key, shard)
     local tries = 0
     local maxtries = 10
+    local parameters = ""
+    if shard ~= "" then
+      parameters = "?shard=" .. shard
+    end
     while tries < maxtries do
       if killgrab then
         return false
       end
       local body, code, headers, status = http.request(
-        "https://legacy-api.arpa.li/backfeed/legacy/" .. key,
+        "https://legacy-api.arpa.li/backfeed/legacy/" .. key .. parameters,
         newurls .. "\0"
       )
       print(body)
@@ -534,28 +548,29 @@ wget.callbacks.finish = function(start_time, end_time, wall_time, numurls, total
     ["grabtemp20221126-zdsihqp9orz79by"]=queued_urls,
     ["urls-y1o7lotz02iy0sw"]=queued_outlinks
   }) do
-    local name = string.match(key, "^(.+)%-[^%-]+$")
-    io.stdout:write("Queuing URLs for " .. name .. ".\n")
-    io.stdout:flush()
-    local newurls = nil
-    local count = 0
-    for url, _ in pairs(items_data) do
-      io.stdout:write("Queuing URL " .. url .. ".\n")
-      io.stdout:flush()
-      if newurls == nil then
-        newurls = url
-      else
-        newurls = newurls .. "\0" .. url
+    local project_name = string.match(key, "^(.+)%-")
+    for shard, url_data in pairs(items_data) do
+      local count = 0
+      local newurls = nil
+      print("Queuing to project " .. project_name .. " on shard " .. shard)
+      for url, _ in pairs(url_data) do
+        io.stdout:write("Queuing URL " .. url .. ".\n")
+        io.stdout:flush()
+        if newurls == nil then
+          newurls = url
+        else
+          newurls = newurls .. "\0" .. url
+        end
+        count = count + 1
+        if count == 100 then
+          submit_backfeed(newurls, key, shard)
+          newurls = nil
+          count = 0
+        end
       end
-      count = count + 1
-      if count == 100 then
-        submit_backfeed(newurls, key)
-        newurls = nil
-        count = 0
+      if newurls ~= nil then
+        submit_backfeed(newurls, key, shard)
       end
-    end
-    if newurls ~= nil then
-      submit_backfeed(newurls, key)
     end
   end
 
