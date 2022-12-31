@@ -6,6 +6,7 @@ local item_dir = os.getenv("item_dir")
 local item_name = os.getenv("item_name")
 local custom_items = os.getenv("custom_items")
 local warc_file_base = os.getenv("warc_file_base")
+local concurrency = tonumber(os.getenv("concurrency"))
 
 local url_count = 0
 local downloaded = {}
@@ -410,6 +411,14 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
   url_count = url_count + 1
   io.stdout:write(url_count .. "=" .. status_code .. " " .. url["url"] .. "  \n")
   io.stdout:flush()
+
+  -- tweakblogs.net specific
+  if string.match(url["url"], "^https?://[^/]*tweakblogs%.net") then
+    local time_to_sleep = tostring(15*concurrency)
+    io.stdout:write("Sleeping " .. time_to_sleep .. " seconds to prevent ban.\n")
+    io.stdout:flush()
+    os.execute("sleep " .. time_to_sleep)
+  end
   
   -- webryblog specific
   if status_code == 423

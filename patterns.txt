@@ -4,3 +4,4 @@
 ^https?://[^/]*xs4all%.nl/~
 ^https?://[^/]+%.home%.xs4all%.nl
 ^https?://geolog%.mydns%.jp
+^https?://[^/]*tweakblogs%.net

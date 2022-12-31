@@ -66,10 +66,10 @@ if not WGET_AT:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20221219.01'
+VERSION = '20221231.01'
 TRACKER_ID = 'grabtemp20221126'
 TRACKER_HOST = 'legacy-api.arpa.li'
-MULTI_ITEM_SIZE = 40
+MULTI_ITEM_SIZE = 5
 
 ###########################################################################
 # This section defines project-specific tasks.
@@ -295,6 +295,12 @@ class WgetArgs(object):
         item_urls = []
         custom_items = {}
 
+        if '--concurrent' in sys.argv:
+            item['concurrency'] = sys.argv[sys.argv.index('--concurrent')+1]
+        else:
+            item['concurrency'] = "1"
+            print('Could not find concurrency, using concurrency 1.')
+
         for item_name in item['item_name'].split('\0'):
             wget_args.extend(['--warc-header', 'x-wget-at-project-item-name: '+item_name])
             wget_args.append('item-name://'+item_name)
@@ -350,7 +356,8 @@ pipeline = Pipeline(
             'item_dir': ItemValue('item_dir'),
             'item_name': ItemValue('item_name_newline'),
             'custom_items': ItemValue('custom_items'),
-            'warc_file_base': ItemValue('warc_file_base')
+            'warc_file_base': ItemValue('warc_file_base'),
+            'concurrency': ItemValue('concurrency')
         }
     ),
     SetBadUrls(),
